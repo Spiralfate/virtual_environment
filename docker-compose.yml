@@ -1,0 +1,105 @@
+version: '2'
+services:
+  frontend-builder:
+    build: ./docker-config/frontend-builder
+    env_file:
+      - .env
+    volumes:
+      - frontend-built:/usr/src/app/frontend-built
+  backend-builder:
+    build: ./docker-config/backend-balancer
+    env_file:
+      - .env
+    volumes:
+      - backend-built:/usr/src/app/backend-built
+  frontend-balancer:
+    build: ./docker-config/frontend-balancer
+    ports:
+      - "80:80"
+      - "8080:443"
+    links:
+      - frontend1
+      - frontend2
+      - frontend3
+  backend-balancer:
+    build: ./docker-config/backend-balancer
+    ports:
+      - "60800:80"
+      - "60400:443"
+    links:
+      - backend1
+      - backend2
+      - backend3
+  db-balancer:
+    build: ./docker-config/db-balancer
+    ports:
+      - "3306:80"
+    links:
+      - db1
+      - db2
+      - db3
+    
+  adminer:
+      image: adminer
+      restart: always
+      ports:
+        - "30400:3000"
+      links:
+        - db-balancer
+
+  # --FRONTEND SERVERS--
+  frontend1:
+    build: ./docker-config/frontend-server
+    volumes:
+      - frontend-built:/usr/src/app/frontend-built
+    ports:
+      - "3000:3000"
+  frontend2:
+    build: ./docker-config/frontend-server
+    volumes:
+      - frontend-built:/usr/src/app/frontend-built
+  frontend3:
+    build: ./docker-config/frontend-server
+    volumes:
+      - frontend-built:/usr/src/app/frontend-built
+  # --BACKEND SERVERS--
+  backend1:
+    image: php:7.2-apache
+    volumes:
+      - ./backend-built:/var/www/html
+  backend2:
+    image: php:7.2-apache
+    volumes:
+      - ./backend-built:/var/www/html
+  backend3:
+    image: php:7.2-apache
+    volumes:
+      - ./backend-built:/var/www/html
+  # --DATABASE SERVERS--
+  db1:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Test1234
+    volumes:
+      - database:/var/lib/mysql
+  db2:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Test1234
+    volumes:
+      - database:/var/lib/mysql
+  db3:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Test1234
+    volumes:
+      - database:/var/lib/mysql
+
+
+volumes:
+  frontend-built:
+  backend-built:
+  database:
